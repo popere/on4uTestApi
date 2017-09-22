@@ -11,7 +11,9 @@ use FOS\RestBundle\Controller\FOSRestController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Doctrine\DBAL\Schema\View;
 
 
 class ProductController extends FOSRestController
@@ -61,24 +63,26 @@ class ProductController extends FOSRestController
                                         UrlGeneratorInterface::ABSOLUTE_URL])]);
     }
 
-
     /**
-    * @Rest\Put(
-    *    path = "/products/{id}",
-    *    name = "app_product_edit",
-    *    requirements = {"id"="\d+"}
-    * )
-    * @Rest\View(StatusCode = 201)
-    * @ParamConverter("product", converter="fos_rest.request_body")
-    */
-    public function editAction(Product $product)
+     * @Rest\Put("/products/{id}")
+     * @Rest\View
+     * requirements = {"id"="\d+"}
+     * @ParamConverter("product", converter="fos_rest.request_body")
+     */
+    public function editAction(Product $product, $id)
     {
-      // $em = $this->getDoctrine()->getManager();
-      //
-      // $em->remove($product);
-      // $em->flush();
+      $productManager = $this->getDoctrine()->getRepository('AppBundle:Product');
+      $oldProduct = $productManager-> findOneById($id);
 
-      return $product->getId();
+      $oldProduct->setSku($product->getSku());
+      $oldProduct->setName($product->getName());
+      $oldProduct->setPrice($product->getPrice());
+
+      $em = $this->getDoctrine()->getManager();
+      $em->persist($oldProduct);
+      $em->flush();
+
+      return $oldProduct;
 
     }
 
